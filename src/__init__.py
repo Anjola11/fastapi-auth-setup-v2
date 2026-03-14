@@ -20,7 +20,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.get("/")
+@app.get("/", tags=["Health"])
 def health_check():
     return "server working"
 
@@ -36,4 +36,4 @@ async def custom_http_exception_handler(request: Request, exc:HTTPException):
         }
     )
 
-app.include_router(auth_router, prefix="/api/auth")
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])

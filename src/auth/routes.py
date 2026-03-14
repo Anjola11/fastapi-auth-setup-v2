@@ -4,7 +4,10 @@ from src.auth.schemas import (
     UserCreateInput,
     UserCreateResponse,
     VerifyOTPInput,
-    VerifyOTPResponse
+    VerifyOTPResponse,
+    UserLoginInput,
+    UserLoginResponse,
+    ResendOtpInput
 )
 from src.auth.models import User
 from src.db.main import get_session
@@ -73,3 +76,42 @@ async def verify_otp(
             "message": "otp verified successfully",
             "data": {}
         }
+    
+@auth_router.post("/resend-otp", status_code=status.HTTP_200_OK)
+async def resend_otp(
+    user_input: ResendOtpInput,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession= Depends(get_session),
+    auth_services: AuthServices = Depends(get_auth_services),
+    email_services: EmailServices = Depends(get_email_services),
+    
+):
+    resend_otp = await auth_services.resend_otp(user_input,session)
+
+    background_tasks.add_task(
+        email_services.send_email_verification_otp,
+        resend_otp.get('email'),
+        resend_otp.get('new_otp_code'),
+        resend_otp.get('first_name')
+    )
+
+    return {
+            "success": True,
+            "message": "otp sent successfully",
+            "data": {}
+        }
+
+    
+    
+@auth_router.post("/login", response_model=UserLoginResponse, status_code=status.HTTP_200_OK)
+async def login(
+    user_input: UserLoginInput, 
+    session: AsyncSession= Depends(get_session),
+    auth_services: AuthServices = Depends(get_auth_services)):
+    user_login = await auth_services.login(user_input, session)
+
+    return {
+        "success": True,
+        "message": "user logged in successfully",
+        "data": user_login
+    }
