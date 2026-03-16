@@ -2,6 +2,12 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 import uuid 
 from typing import Optional
+from enum import Enum
+
+class OtpType(str, Enum):
+    SIGNUP= "signup"
+    FORGOT_PASSWORD= "forgot_password"
+
 
 class User(BaseModel):
     uid: uuid.UUID
@@ -22,12 +28,12 @@ class UserCreateResponse(BaseModel):
     message: str
     data: User
 
-class VerifyOTPInput(BaseModel):
+class VerifySignupOTPInput(BaseModel):
     uid: uuid.UUID
     otp: str
 
 
-class VerifyOTPResponse(BaseModel):
+class VerifySignupOTPResponse(BaseModel):
     success: bool
     message: str
     data: dict = {}
@@ -53,4 +59,25 @@ class UserLoginResponse(BaseModel):
 
 
 class ResendOtpInput(BaseModel):
-    email: str
+    email: EmailStr
+
+class ForgotPasswordInput(BaseModel):
+    email: EmailStr
+
+class VerifyForgotPasswordInput(BaseModel):
+    email: EmailStr
+    otp: str
+
+class ResetPasswordInput(BaseModel):
+    email: EmailStr
+    new_password: str
+
+class VerifyForgotPasswordResponse(BaseModel):
+    success: bool
+    message: str
+    data: dict = {}
+
+class ResetPasswordResponse(BaseModel):
+    success: bool
+    message: str
+    data: dict = {}

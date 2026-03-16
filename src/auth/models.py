@@ -44,3 +44,26 @@ class SignupOtp(SQLModel, table=True):
         default_factory=get_expiry,
         sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False)
     )
+
+class ForgotPasswordOtp(SQLModel, table=True):
+    __tablename__ = "forgot_password_otp"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    uid: uuid.UUID = Field(foreign_key="users.uid")
+    otp_hash: str
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(pg.TIMESTAMP(timezone=True))
+    )
+    expires: datetime = Field(
+        default_factory=get_expiry,
+        sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False)
+    )
+
+class AllowedResetPassword(SQLModel, table=True):
+    __tablename__ = "allowed_reset_password"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    uid: uuid.UUID = Field(foreign_key="users.uid")
+    expires: datetime = Field(
+        default_factory=get_expiry,
+        sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False)
+    )
