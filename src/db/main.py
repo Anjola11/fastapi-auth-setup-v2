@@ -13,7 +13,12 @@ async def init_db():
     async with engine.begin() as conn:
 
         #import models here
-        from src.auth.models import User
+        from src.auth.models import (
+            User, 
+            SignupOtp, 
+            ForgotPasswordOtp,
+            AllowedResetPassword
+        )
 
         await conn.run_sync(SQLModel.metadata.create_all)
 

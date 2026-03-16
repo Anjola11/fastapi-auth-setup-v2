@@ -85,4 +85,37 @@ The test Team"""
 
         return await self.send_email(user_email, subject, html_content, text_content)
 
+    
+    async def send_forgot_password_otp(self, user_email: str, otp_code: str, user_first_name: str):
+        subject = 'Test -Reset Password Code'
+        html_content = self.render_template('forgot-password-otp', {
+                'user_first_name': user_first_name,
+                'otpCode': otp_code,
+                'expiryTime': '10 minutes'
+            }
+        )
+        text_content = f"""
+
+Hello {{ user_first_name }},
+
+We received a request to reset your password. Use the code below to proceed:
+
+Your Password Reset Code:
+
+{{ otpCode }}
+
+This code will expire in {{ expiryTime }}.
+
+SECURITY NOTICE: If you did not request a password reset, your account may be at risk. Please ignore this email and consider securing your account immediately.
+
+Important: Never share this code with anyone, including support staff.
+
+Best regards,
+The test Team
+
+---
+This is an automated message. Please do not reply to this email."""
+        return await self.send_email(user_email, subject, html_content, text_content)
+    
+    
 

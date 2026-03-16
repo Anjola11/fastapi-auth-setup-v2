@@ -3,11 +3,16 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.auth.schemas import (
     UserCreateInput,
     UserCreateResponse,
-    VerifyOTPInput,
-    VerifyOTPResponse,
+    VerifySignupOTPInput,
+    VerifySignupOTPResponse,
     UserLoginInput,
     UserLoginResponse,
-    ResendOtpInput
+    ResendOtpInput,
+    ForgotPasswordInput,
+    VerifyForgotPasswordInput,
+    VerifyForgotPasswordResponse,
+    ResetPasswordInput,
+    ResetPasswordResponse
 )
 from src.auth.models import User
 from src.db.main import get_session
@@ -53,16 +58,16 @@ async def create_user(
         "data": new_user
     }
 
-@auth_router.post('/verify-otp', response_model=VerifyOTPResponse, status_code=status.HTTP_200_OK)
+@auth_router.post('/verify-otp', response_model=VerifySignupOTPResponse, status_code=status.HTTP_200_OK)
 async def verify_otp(
-    user_input: VerifyOTPInput, 
+    user_input: VerifySignupOTPInput, 
     background_tasks: BackgroundTasks, 
     session: AsyncSession = Depends(get_session),
     auth_services: AuthServices = Depends(get_auth_services),
     email_services: EmailServices = Depends(get_email_services)
     ):
 
-    verified_otp = await auth_services.verify_otp(user_input, session)
+    verified_otp = await auth_services.verify_signup_otp(user_input, session)
 
     if verified_otp:
         background_tasks.add_task(
@@ -114,4 +119,58 @@ async def login(
         "success": True,
         "message": "user logged in successfully",
         "data": user_login
+    }
+
+@auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(
+    user_input: ForgotPasswordInput,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession= Depends(get_session),
+    auth_services: AuthServices = Depends(get_auth_services),
+    email_services: EmailServices = Depends(get_email_services),
+    
+):
+    forgot_password_otp = await auth_services.forgot_password(user_input,session)
+
+    background_tasks.add_task(
+        email_services.send_forgot_password_otp,
+        forgot_password_otp.get('email'),
+        forgot_password_otp.get('new_otp_code'),
+        forgot_password_otp.get('first_name')
+    )
+
+    return {
+            "success": True,
+            "message": "otp sent successfully",
+            "data": {}
+        }
+
+@auth_router.post("/verify-forgot-password-otp", response_model=VerifyForgotPasswordResponse, status_code=status.HTTP_200_OK)
+async def verify_forgot_password_otp(
+    user_input: VerifyForgotPasswordInput,
+    session: AsyncSession = Depends(get_session),
+    auth_services: AuthServices = Depends(get_auth_services)
+    ):
+
+    verified = await auth_services.verify_forgot_password_otp(user_input, session)
+
+    return {
+        "success": True,
+        "message": "otp verified successfully, proceed to reset your password",
+        "data": {}
+    }
+
+@auth_router.post("/reset-password", response_model=ResetPasswordResponse, status_code=status.HTTP_200_OK)
+async def reset_password(
+    user_input: ResetPasswordInput,
+    session: AsyncSession = Depends(get_session),
+    auth_services: AuthServices = Depends(get_auth_services)
+    ):
+
+    await auth_services.reset_password(user_input, session)
+
+    return {
+        "success": True,
+        "message": "password reset successfully, proceed to login",
+        "data": {}
     }
